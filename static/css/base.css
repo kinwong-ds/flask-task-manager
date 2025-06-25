@@ -10,7 +10,7 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem;
+    padding: 0.5rem 1rem 1rem; /* Reduced top padding */
 }
 
 .card {
@@ -136,6 +136,7 @@ body {
     margin-bottom: 1rem;
     background-color: rgba(0,0,0,0.05);
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .project-card.expanded {
@@ -181,8 +182,11 @@ body {
 .task-item h4 {
     margin-bottom: 0.5rem;
     color: #2c3e50;
-    padding-right: 8rem;
     word-break: break-word;
+}
+
+.task-title {
+    padding-right: 8rem;
 }
 
 .task-item-content {
@@ -221,11 +225,14 @@ body {
 
 .modal-content {
     background-color: white;
-    margin: 10% auto;
+    margin: 5% auto;
     padding: 2rem;
     border-radius: 8px;
     width: 80%;
     max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
 }
 
 .close {
@@ -282,7 +289,7 @@ body {
     background: #fff;
     padding: 1rem 0;
     border-bottom: 1px solid #eee;
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem; /* Reduced from 2rem */
 }
 
 .navbar .container {

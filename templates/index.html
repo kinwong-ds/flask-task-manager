@@ -1,50 +1,50 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="grid grid-2" style="margin-bottom: 2rem;">
-    <button class="btn btn-primary" onclick="openModal('projectModal')">
-        <i class="fas fa-plus"></i> New Project
-    </button>
-    <button class="btn btn-success" onclick="openModal('taskModal')">
-        <i class="fas fa-plus"></i> New Task
-    </button>
+<!-- Page Header -->
+<div class="page-header" style="margin-bottom: 1rem;">
+    <h1 style="margin: 0; font-size: 1.8rem;">
+        <i class="fas fa-folder"></i> Projects
+    </h1>
+    <div class="grid grid-2" style="margin-top: 1rem;">
+        <button class="btn btn-primary" onclick="openModal('projectModal')">
+            <i class="fas fa-plus"></i> New Project
+        </button>
+        <button class="btn btn-success" onclick="openModal('taskModal')">
+            <i class="fas fa-plus"></i> New Task
+        </button>
+    </div>
 </div>
 
-<!-- Projects Overview -->
-<div class="card">
-    <div class="card-header">
-        <i class="fas fa-folder"></i> Projects
-    </div>
-    <div class="card-body">
-        <div class="grid grid-3" id="projectsList">
-            {% for project in projects %}
-            <div class="project-card" style="border-color: {{ project.color }}; background-color: {{ project.color }}10;" id="project-card-{{ project.id }}">
-                <div class="project-card-header" onclick="toggleTasks({{ project.id }})">
-                    <div>
-                        <h3 class="project-name" style="color: #2c3e50;">{{ project.name }}</h3>
-                        <p class="task-count">{{ project.tasks|length }} tasks</p>
-                    </div>
-                    <div class="project-actions">
-                        <button class="btn btn-primary btn-sm" data-project='{{ project.to_dict() | tojson | safe }}' onclick='event.stopPropagation(); openEditProjectModal(this)'>
-                            <i class="fas fa-pen"></i>
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteProject({{ project.id }})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="project-tasks" id="project-tasks-{{ project.id }}" style="display: none;">
-                    {% for task in project.tasks %}
-                    <div class="task-item-preview" style="border-left-color: {{ project.color }};">
-                        <span>{{ task.title }}</span>
-                        <span class="priority-{{ task.priority }}">{{ task.priority }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
+<!-- Projects Grid -->
+<div class="grid grid-3" id="projectsList" style="margin-bottom: 1.5rem;">
+    {% for project in projects %}
+    <div class="project-card" style="border-color: {{ project.color }}; background-color: {{ project.color }}10;" id="project-card-{{ project.id }}">
+        <div class="project-card-header" onclick="toggleTasks({{ project.id }})">
+            <div>
+                <h3 class="project-name" style="color: #2c3e50; margin: 0;">{{ project.name }}</h3>
+                <p class="task-count" style="margin: 0.25rem 0 0;">{{ project.tasks|length }} tasks</p>
+            </div>
+            <div class="project-actions">
+                <button class="btn btn-primary btn-sm" data-project='{{ project.to_dict() | tojson | safe }}' onclick='event.stopPropagation(); openEditProjectModal(this)'>
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); openDeleteProjectModal({{ project.id }})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="project-tasks" id="project-tasks-{{ project.id }}" style="display: none;">
+            {% for task in project.tasks %}
+            <div class="task-item-preview" style="border-left-color: {{ project.color }}; cursor: pointer;"
+                 data-task='{{ task.to_dict() | tojson | safe }}' onclick='openViewTaskModal(this)'>
+                <span>{{ task.title }}</span>
+                <span class="priority-{{ task.priority }}">{{ task.priority }}</span>
             </div>
             {% endfor %}
         </div>
     </div>
+    {% endfor %}
 </div>
 
 <!-- Tasks Sections -->
@@ -59,22 +59,29 @@
                 {% for task in overdue_tasks %}
                 <div class="task-item" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }}; background-color: {{ task.project.color }}1A;">
                     <div class="task-item-content">
-                        <div style="flex: 1;">
-                            <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
-                            <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
-                            <div class="task-meta">
-                                <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
-                                <span class="task-due-date" style="color: #e74c3c;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }} - {% set delta = date.today() - task.due_date %}{% if delta.days == 1 %}Yesterday{% else %}{{ delta.days }} days ago{% endif %}, {{ task.due_date.strftime('%A') }}</span>
+                        <div class="task-title">
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 0;">{{ task.project.name }}</p>
+                                </div>
+                                <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
+                                <div class="task-meta">
+                                    <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
+                                    <span class="task-due-date" style="color: #e74c3c;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }} - {% set delta = date.today() - task.due_date %}{% if delta.days == 1 %}Yesterday{% else %}{{ delta.days }} days ago{% endif %}, {{ task.due_date.strftime('%A') }}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="task-actions">
+                            <button class="btn btn-view btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openViewTaskModal(this)'>
+                                <i class="fas fa-eye"></i>
+                            </button>
                             <button class="btn btn-primary btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openEditTaskModal(this)'>
                                 <i class="fas fa-pen"></i>
                             </button>
                             <button class="btn btn-success btn-sm" onclick="toggleTask({{ task.id }})">
                                 <i class="fas fa-check"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTask({{ task.id }})">
+                            <button class="btn btn-danger btn-sm" onclick="openDeleteTaskModal({{ task.id }})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -98,22 +105,29 @@
                 {% for task in upcoming_tasks %}
                 <div class="task-item" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }}; background-color: {{ task.project.color }}1A;">
                     <div class="task-item-content">
-                        <div style="flex: 1;">
-                            <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
-                            <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
-                            <div class="task-meta">
-                                <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
-                                <span class="task-due-date" style="color: #3498db;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }} - {% set delta = task.due_date - date.today() %}{% if delta.days == 0 %}Today{% elif delta.days == 1 %}Tomorrow{% else %}in {{ delta.days }} days{% endif %}, {{ task.due_date.strftime('%A') }}</span>
+                        <div class="task-title">
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 0;">{{ task.project.name }}</p>
+                                </div>
+                                <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
+                                <div class="task-meta">
+                                    <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
+                                    <span class="task-due-date" style="color: #3498db;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }} - {% set delta = task.due_date - date.today() %}{% if delta.days == 0 %}Today{% elif delta.days == 1 %}Tomorrow{% else %}in {{ delta.days }} days{% endif %}, {{ task.due_date.strftime('%A') }}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="task-actions">
+                            <button class="btn btn-view btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openViewTaskModal(this)'>
+                                <i class="fas fa-eye"></i>
+                            </button>
                             <button class="btn btn-primary btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openEditTaskModal(this)'>
                                 <i class="fas fa-pen"></i>
                             </button>
                             <button class="btn btn-success btn-sm" onclick="toggleTask({{ task.id }})">
                                 <i class="fas fa-check"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTask({{ task.id }})">
+                            <button class="btn btn-danger btn-sm" onclick="openDeleteTaskModal({{ task.id }})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -137,22 +151,29 @@
                 {% for task in completed_tasks %}
                 <div class="task-item task-completed" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }}; background-color: {{ task.project.color }}1A;">
                     <div class="task-item-content">
-                        <div style="flex: 1;">
-                            <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
-                            <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
-                            <div class="task-meta">
-                                <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
-                                <span style="color: #2ecc71;"><i class="fas fa-check"></i> Completed</span>
+                        <div class="task-title">
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 0;">{{ task.project.name }}</p>
+                                </div>
+                                <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
+                                <div class="task-meta">
+                                    <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
+                                    <span style="color: #2ecc71;"><i class="fas fa-check"></i> Completed</span>
+                                </div>
                             </div>
                         </div>
                         <div class="task-actions">
+                            <button class="btn btn-view btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openViewTaskModal(this)'>
+                                <i class="fas fa-eye"></i>
+                            </button>
                             <button class="btn btn-primary btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openEditTaskModal(this)'>
                                 <i class="fas fa-pen"></i>
                             </button>
                             <button class="btn btn-primary btn-sm" onclick="toggleTask({{ task.id }})">
                                 <i class="fas fa-undo"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTask({{ task.id }})">
+                            <button class="btn btn-danger btn-sm" onclick="openDeleteTaskModal({{ task.id }})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -307,6 +328,43 @@
     </div>
 </div>
 
+<!-- View Task Modal -->
+<div id="viewTaskModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('viewTaskModal')">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;">Task Details</h2>
+        <div id="viewTaskContent">
+            <!-- Task details will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Delete Task Modal -->
+<div id="deleteTaskModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('deleteTaskModal')">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;">Confirm Deletion</h2>
+        <p>Are you sure you want to delete this task?</p>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+            <button class="btn" onclick="closeModal('deleteTaskModal')">Cancel</button>
+            <button id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Project Modal -->
+<div id="deleteProjectModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('deleteProjectModal')">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;">Confirm Deletion</h2>
+        <p>Are you sure you want to delete this project? All associated tasks will also be deleted.</p>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+            <button class="btn" onclick="closeModal('deleteProjectModal')">Cancel</button>
+            <button id="confirmDeleteProjectBtn" class="btn btn-danger">Delete</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -407,35 +465,41 @@
         }
     }
     
+    function openDeleteTaskModal(taskId) {
+        openModal('deleteTaskModal');
+        document.getElementById('confirmDeleteBtn').onclick = () => confirmDeleteTask(taskId);
+    }
+
     // Delete task
-    async function deleteTask(taskId) {
-        if (confirm('Are you sure you want to delete this task?')) {
-            try {
-                await apiCall(`/api/tasks/${taskId}`, {
-                    method: 'DELETE'
-                });
-                
-                showNotification('Task deleted successfully!');
-                location.reload();
-            } catch (error) {
-                showNotification('Error deleting task', 'error');
-            }
+    async function confirmDeleteTask(taskId) {
+        try {
+            await apiCall(`/api/tasks/${taskId}`, {
+                method: 'DELETE'
+            });
+            
+            showNotification('Task deleted successfully!');
+            location.reload();
+        } catch (error) {
+            showNotification('Error deleting task', 'error');
         }
     }
     
+    function openDeleteProjectModal(projectId) {
+        openModal('deleteProjectModal');
+        document.getElementById('confirmDeleteProjectBtn').onclick = () => confirmDeleteProject(projectId);
+    }
+
     // Delete project
-    async function deleteProject(projectId) {
-        if (confirm('Are you sure you want to delete this project? All associated tasks will be deleted.')) {
-            try {
-                await apiCall(`/api/projects/${projectId}`, {
-                    method: 'DELETE'
-                });
-                
-                showNotification('Project deleted successfully!');
-                location.reload();
-            } catch (error) {
-                showNotification('Error deleting project', 'error');
-            }
+    async function confirmDeleteProject(projectId) {
+        try {
+            await apiCall(`/api/projects/${projectId}`, {
+                method: 'DELETE'
+            });
+            
+            showNotification('Project deleted successfully!');
+            location.reload();
+        } catch (error) {
+            showNotification('Error deleting project', 'error');
         }
     }
  

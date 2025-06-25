@@ -51,6 +51,11 @@ class Task(db.Model):
             'completed': self.completed,
             'priority': self.priority,
             'project_id': self.project_id,
+            'project': {
+                'id': self.project.id,
+                'name': self.project.name,
+                'color': self.project.color
+            } if self.project else None,
             'created_at': self.created_at.isoformat(),
             'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }
