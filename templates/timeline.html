@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-chart-gantt"></i> Project Timeline
+        <div style="margin-left: auto;">
+            <select id="projectFilter" onchange="filterByProject()" style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                <option value="">All Projects</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="ganttChart" style="overflow-x: auto; min-height: 400px;">
+            <!-- Gantt chart will be rendered here -->
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Legend -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-info-circle"></i> Legend
+    </div>
+    <div class="card-body">
+        <div class="grid grid-3">
+            {% for project in projects %}
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 20px; height: 20px; background: {{ project.color }}; border-radius: 4px;"></div>
+                <span>{{ project.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const tasks = {{ tasks|tojson }};
+    const projects = {{ projects|tojson }};
+    
+    // Calculate date range
+    function getDateRange() {
+        const today = new Date();
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - 7); // Start 1 week ago
+        
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 30); // End 30 days from now
+        
+        return { startDate, endDate };
+    }
+    
+    // Generate date labels
+    function generateDateLabels(startDate, endDate) {
+        const dates = [];
+        const current = new Date(startDate);
+        
+        while (current <= endDate) {
+            dates.push(new Date(current));
+            current.setDate(current.getDate() + 1);
+        }
+        
+        return dates;
+    }
+    
+    // Render Gantt chart
+    function renderGanttChart(filteredTasks = null) {
+        const { startDate, endDate } = getDateRange();
+        const dates = generateDateLabels(startDate, endDate);
+        const tasksToRender = filteredTasks || tasks;
+        
+        const ganttContainer = document.getElementById('ganttChart');
+        ganttContainer.innerHTML = '';
+        
+        // Create chart container
+        const chart = document.createElement('div');
+        chart.style.cssText = `
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-width: 800px;
+        `;
+        
+        // Task list column
+        const taskList = document.createElement('div');
+        taskList.style.cssText = `
+            border-right: 2px solid #ecf0f1;
+            background: #f8f9fa;
+        `;
+        
+        // Timeline column
+        const timeline = document.createElement('div');
+        timeline.style.cssText = `
+            overflow-x: auto;
+        `;
+        
+        // Create header
+        const header = document.createElement('div');
+        header.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(${dates.length}, 60px);
+            border-bottom: 2px solid #ecf0f1;
+            background: #34495e;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 500;
+        `;
+        
+        dates.forEach(date => {
+            const dateCell = document.createElement('div');
+            dateCell.style.cssText = `
+                padding: 0.5rem 0.25rem;
+                text-align: center;
+                border-right: 1px solid #2c3e50;
+            `;
+            dateCell.textContent = date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            // Highlight today
+            const today = new Date();
+            if (date.toDateString() === today.toDateString()) {
+                dateCell.style.background = '#e74c3c';
+            }
+            
+            header.appendChild(dateCell);
+        });
+        
+        timeline.appendChild(header);
+        
+        // Task list header
+        const taskListHeader = document.createElement('div');
+        taskListHeader.style.cssText = `
+            padding: 0.5rem 1rem;
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+            border-bottom: 2px solid #2c3e50;
+        `;
+        taskListHeader.textContent = 'Tasks';
+        taskList.appendChild(taskListHeader);
+        
+        // Render tasks
+        tasksToRender.forEach(task => {
+            const project = projects.find(p => p.id === task.project_id);
+            
+            // Task name cell
+            const taskNameCell = document.createElement('div');
+            taskNameCell.style.cssText = `
+                padding: 1rem;
+                border-bottom: 1px solid #ecf0f1;
+                border-left: 4px solid ${project.color};
+                background: white;
+            `;
+            
+            taskNameCell.innerHTML = `
+                <div style="font-weight: 500; color: #2c3e50; margin-bottom: 0.25rem;">${task.title}</div>
+                <div style="font-size: 0.8rem; color: #7f8c8d;">${project.name}</div>
+                <div style="font-size: 0.7rem; color: #95a5a6; margin-top: 0.25rem;">
+                    <span class="priority-${task.priority}">${task.priority.toUpperCase()}</span>
+                </div>
+            `;
+            
+            taskList.appendChild(taskNameCell);
+            
+            // Task timeline row
+            const taskTimelineRow = document.createElement('div');
+            taskTimelineRow.style.cssText = `
+                display: grid;
+                grid-template-columns: repeat(${dates.length}, 60px);
+                border-bottom: 1px solid #ecf0f1;
+                background: white;
+                position: relative;
+            `;
+            
+            // Create timeline cells
+            dates.forEach(date => {
+                const cell = document.createElement('div');
+                cell.style.cssText = `
+                    height: 60px;
+                    border-right: 1px solid #ecf0f1;
+                    position: relative;
+                `;
+                taskTimelineRow.appendChild(cell);
+            });
+            
+            // Add task bar
+            const taskStartDate = new Date(task.start_date);
+            const taskEndDate = task.due_date ? new Date(task.due_date) : new Date(taskStartDate.getTime() + 24 * 60 * 60 * 1000);
+            
+            const startIndex = dates.findIndex(date => 
+                date.toDateString() === taskStartDate.toDateString()
+            );
+            
+            const endIndex = dates.findIndex(date => 
+                date.toDateString() === taskEndDate.toDateString()
+            );
+            
+            if (startIndex !== -1) {
+                const taskBar = document.createElement('div');
+                const duration = endIndex !== -1 ? (endIndex - startIndex + 1) : 1;
+                
+                taskBar.style.cssText = `
+                    position: absolute;
+                    left: ${startIndex * 60 + 5}px;
+                    top: 15px;
+                    width: ${duration * 60 - 10}px;
+                    height: 30px;
+                    background: ${project.color};
+                    border-radius: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 0.7rem;
+                    font-weight: 500;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    opacity: ${task.completed ? 0.5 : 1};
+                    cursor: pointer;
+                `;
+                
+                if (task.completed) {
+                    taskBar.style.textDecoration = 'line-through';
+                }
+                
+                // Check if overdue
+                const today = new Date();
+                if (taskEndDate < today && !task.completed) {
+                    taskBar.style.background = '#e74c3c';
+                }
+                
+                taskBar.title = `${task.title}\nStart: ${taskStartDate.toLocaleDateString()}\nDue: ${taskEndDate.toLocaleDateString()}\nStatus: ${task.completed ? 'Completed' : 'In Progress'}`;
+                
+                taskTimelineRow.appendChild(taskBar);
+            }
+            
+            timeline.appendChild(taskTimelineRow);
+        });
+        
+        chart.appendChild(taskList);
+        chart.appendChild(timeline);
+        ganttContainer.appendChild(chart);
+        
+        // Add today indicator
+        const today = new Date();
+        const todayIndex = dates.findIndex(date => 
+            date.toDateString() === today.toDateString()
+        );
+        
+        if (todayIndex !== -1) {
+            const todayLine = document.createElement('div');
+            todayLine.style.cssText = `
+                position: absolute;
+                left: ${todayIndex * 60 + 30}px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #e74c3c;
+                z-index: 10;
+                pointer-events: none;
+            `;
+            timeline.style.position = 'relative';
+            timeline.appendChild(todayLine);
+        }
+    }
+    
+    // Filter tasks by project
+    function filterByProject() {
+        const projectId = document.getElementById('projectFilter').value;
+        
+        if (projectId) {
+            const filteredTasks = tasks.filter(task => task.project_id == projectId);
+            renderGanttChart(filteredTasks);
+        } else {
+            renderGanttChart();
+        }
+    }
+    
+    // Initialize chart
+    document.addEventListener('DOMContentLoaded', () => {
+        renderGanttChart();
+    });
+</script>
+{% endblock %}
