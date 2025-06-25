@@ -19,6 +19,16 @@ class Project(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     tasks = db.relationship('Task', backref='project', lazy=True, cascade='all, delete-orphan')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'color': self.color,
+            'created_at': self.created_at.isoformat(),
+            'tasks': [task.to_dict() for task in self.tasks]
+        }
+
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -30,6 +40,20 @@ class Task(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'completed': self.completed,
+            'priority': self.priority,
+            'project_id': self.project_id,
+            'created_at': self.created_at.isoformat(),
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
 
 # Routes
 @app.route('/')
@@ -84,6 +108,21 @@ def handle_projects():
         'task_count': len(p.tasks)
     } for p in projects])
 
+@app.route('/api/projects/<int:project_id>', methods=['PUT', 'DELETE'])
+def handle_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    if request.method == 'PUT':
+        data = request.get_json()
+        project.name = data.get('name', project.name)
+        project.description = data.get('description', project.description)
+        project.color = data.get('color', project.color)
+        db.session.commit()
+        return jsonify({'id': project.id, 'name': project.name, 'color': project.color})
+    
+    db.session.delete(project)
+    db.session.commit()
+    return jsonify({'success': True})
+
 @app.route('/api/tasks', methods=['GET', 'POST'])
 def handle_tasks():
     if request.method == 'POST':
@@ -114,6 +153,24 @@ def handle_tasks():
         'project_color': t.project.color
     } for t in tasks])
 
+@app.route('/api/tasks/<int:task_id>', methods=['PUT', 'DELETE'])
+def handle_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    if request.method == 'PUT':
+        data = request.get_json()
+        task.title = data.get('title', task.title)
+        task.description = data.get('description', task.description)
+        task.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date() if data.get('due_date') else None
+        task.start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date() if data.get('start_date') else task.start_date
+        task.priority = data.get('priority', task.priority)
+        task.project_id = data.get('project_id', task.project_id)
+        db.session.commit()
+        return jsonify({'id': task.id, 'title': task.title})
+    
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({'success': True})
+
 @app.route('/api/tasks/<int:task_id>/toggle', methods=['POST'])
 def toggle_task(task_id):
     task = Task.query.get_or_404(task_id)
@@ -122,19 +179,6 @@ def toggle_task(task_id):
     db.session.commit()
     return jsonify({'completed': task.completed})
 
-@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
-def delete_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    db.session.delete(task)
-    db.session.commit()
-    return jsonify({'success': True})
-
-@app.route('/api/projects/<int:project_id>', methods=['DELETE'])
-def delete_project(project_id):
-    project = Project.query.get_or_404(project_id)
-    db.session.delete(project)
-    db.session.commit()
-    return jsonify({'success': True})
 
 # Initialize database function
 def init_db():

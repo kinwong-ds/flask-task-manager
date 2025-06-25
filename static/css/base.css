@@ -130,6 +130,31 @@ body {
     border-radius: 8px;
     margin-bottom: 1rem;
     background-color: rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.project-card.expanded {
+    grid-column: span 1 / span 1;
+}
+
+.project-card-header {
+    cursor: pointer;
+}
+
+.project-tasks {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.task-item-preview {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background-color: #fff;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid;
 }
 
 /* Task item styles */
@@ -140,6 +165,13 @@ body {
     border-radius: 6px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     border-left: 4px solid;
+    position: relative;
+}
+
+.task-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .task-completed {
@@ -172,4 +204,83 @@ body {
     font-size: 1.5rem;
     font-weight: bold;
     cursor: pointer;
+}
+
+/* Action buttons on hover */
+.project-card .project-actions,
+.task-item .task-actions {
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.project-card:hover .project-actions,
+.task-item:hover .task-actions {
+    opacity: 1;
+}
+
+.project-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.color-picker {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.color-swatch {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.color-swatch.selected {
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+/* Navbar styles */
+.navbar {
+    background: #fff;
+    padding: 1rem 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 2rem;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+    text-decoration: none;
+}
+
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #34495e;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover {
+    color: #3498db;
 }

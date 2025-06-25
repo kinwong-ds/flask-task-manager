@@ -18,15 +18,28 @@
     <div class="card-body">
         <div class="grid grid-3" id="projectsList">
             {% for project in projects %}
-            <div class="project-card" style="border-color: {{ project.color }}; background-color: {{ project.color }}10;">
-                <div class="project-card-header">
+            <div class="project-card" style="border-color: {{ project.color }}; background-color: {{ project.color }}10;" id="project-card-{{ project.id }}">
+                <div class="project-card-header" onclick="toggleTasks({{ project.id }})">
                     <div>
-                        <h3 class="project-name" style="color: {{ project.color }};">{{ project.name }}</h3>
+                        <h3 class="project-name" style="color: #2c3e50;">{{ project.name }}</h3>
                         <p class="task-count">{{ project.tasks|length }} tasks</p>
                     </div>
-                    <button class="btn btn-danger btn-sm" onclick="deleteProject({{ project.id }})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="project-actions">
+                        <button class="btn btn-primary btn-sm" data-project='{{ project.to_dict() | tojson | safe }}' onclick='event.stopPropagation(); openEditProjectModal(this)'>
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteProject({{ project.id }})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="project-tasks" id="project-tasks-{{ project.id }}" style="display: none;">
+                    {% for task in project.tasks %}
+                    <div class="task-item-preview" style="border-left-color: {{ project.color }};">
+                        <span>{{ task.title }}</span>
+                        <span class="priority-{{ task.priority }}">{{ task.priority }}</span>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
             {% endfor %}
@@ -44,8 +57,8 @@
         <div class="card-body">
             <div id="overdueTasks">
                 {% for task in overdue_tasks %}
-                <div class="task-item" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }};">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="task-item" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }}; background-color: {{ task.project.color }}1A;">
+                    <div class="task-item-content">
                         <div style="flex: 1;">
                             <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                             <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
@@ -54,7 +67,10 @@
                                 <span style="color: #e74c3c;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }}</span>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div class="task-actions">
+                            <button class="btn btn-primary btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openEditTaskModal(this)'>
+                                <i class="fas fa-pen"></i>
+                            </button>
                             <button class="btn btn-success btn-sm" onclick="toggleTask({{ task.id }})">
                                 <i class="fas fa-check"></i>
                             </button>
@@ -80,8 +96,8 @@
         <div class="card-body">
             <div id="upcomingTasks">
                 {% for task in upcoming_tasks %}
-                <div class="task-item" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }};">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="task-item" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }}; background-color: {{ task.project.color }}1A;">
+                    <div class="task-item-content">
                         <div style="flex: 1;">
                             <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                             <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
@@ -90,7 +106,10 @@
                                 <span style="color: #3498db;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }}</span>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div class="task-actions">
+                            <button class="btn btn-primary btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openEditTaskModal(this)'>
+                                <i class="fas fa-pen"></i>
+                            </button>
                             <button class="btn btn-success btn-sm" onclick="toggleTask({{ task.id }})">
                                 <i class="fas fa-check"></i>
                             </button>
@@ -116,8 +135,8 @@
         <div class="card-body">
             <div id="completedTasks">
                 {% for task in completed_tasks %}
-                <div class="task-item task-completed" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }};">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="task-item task-completed" data-task-id="{{ task.id }}" style="border-left-color: {{ task.project.color }}; background-color: {{ task.project.color }}1A;">
+                    <div class="task-item-content">
                         <div style="flex: 1;">
                             <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                             <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
@@ -126,7 +145,10 @@
                                 <span style="color: #2ecc71;"><i class="fas fa-check"></i> Completed</span>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div class="task-actions">
+                            <button class="btn btn-primary btn-sm" data-task='{{ task.to_dict() | tojson | safe }}' onclick='openEditTaskModal(this)'>
+                                <i class="fas fa-pen"></i>
+                            </button>
                             <button class="btn btn-primary btn-sm" onclick="toggleTask({{ task.id }})">
                                 <i class="fas fa-undo"></i>
                             </button>
@@ -160,8 +182,9 @@
                 <textarea id="projectDescription" name="description" rows="3"></textarea>
             </div>
             <div class="form-group">
-                <label for="projectColor">Color</label>
-                <input type="color" id="projectColor" name="color" value="#3498db">
+                <label>Color</label>
+                <div class="color-picker" id="projectColorPicker"></div>
+                <input type="hidden" id="projectColor" name="color" value="#3498db">
             </div>
             <button type="submit" class="btn btn-primary">Create Project</button>
         </form>
@@ -213,6 +236,77 @@
     </div>
 </div>
 
+<!-- Edit Project Modal -->
+<div id="editProjectModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('editProjectModal')">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;">Edit Project</h2>
+        <form id="editProjectForm">
+            <input type="hidden" id="editProjectId" name="id">
+            <div class="form-group">
+                <label for="editProjectName">Project Name</label>
+                <input type="text" id="editProjectName" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="editProjectDescription">Description</label>
+                <textarea id="editProjectDescription" name="description" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <div class="color-picker" id="editProjectColorPicker"></div>
+                <input type="hidden" id="editProjectColor" name="color">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div id="editTaskModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('editTaskModal')">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;">Edit Task</h2>
+        <form id="editTaskForm">
+            <input type="hidden" id="editTaskId" name="id">
+            <div class="form-group">
+                <label for="editTaskTitle">Task Title</label>
+                <input type="text" id="editTaskTitle" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="editTaskDescription">Description</label>
+                <textarea id="editTaskDescription" name="description" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editTaskProject">Project</label>
+                <select id="editTaskProject" name="project_id" required>
+                    {% for project in projects %}
+                    <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="editTaskStartDate">Start Date</label>
+                    <input type="date" id="editTaskStartDate" name="start_date">
+                </div>
+                <div class="form-group">
+                    <label for="editTaskDueDate">Due Date</label>
+                    <input type="date" id="editTaskDueDate" name="due_date">
+                </div>
+                <div class="form-group">
+                    <label for="editTaskPriority">Priority</label>
+                    <select id="editTaskPriority" name="priority">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Save Changes</button>
+        </form>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -224,7 +318,7 @@
         const data = Object.fromEntries(formData);
         
         try {
-            const result = await apiCall('/api/projects', {
+            await apiCall('/api/projects', {
                 method: 'POST',
                 body: JSON.stringify(data)
             });
@@ -236,6 +330,27 @@
             showNotification('Error creating project', 'error');
         }
     });
+
+    // Edit project form submission
+    document.getElementById('editProjectForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+        const projectId = data.id;
+
+        try {
+            await apiCall(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+            
+            showNotification('Project updated successfully!');
+            closeModal('editProjectModal');
+            location.reload();
+        } catch (error) {
+            showNotification('Error updating project', 'error');
+        }
+    });
     
     // Task form submission
     document.getElementById('taskForm').addEventListener('submit', async (e) => {
@@ -244,7 +359,7 @@
         const data = Object.fromEntries(formData);
         
         try {
-            const result = await apiCall('/api/tasks', {
+            await apiCall('/api/tasks', {
                 method: 'POST',
                 body: JSON.stringify(data)
             });
@@ -256,11 +371,32 @@
             showNotification('Error creating task', 'error');
         }
     });
+
+    // Edit task form submission
+    document.getElementById('editTaskForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+        const taskId = data.id;
+
+        try {
+            await apiCall(`/api/tasks/${taskId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+            
+            showNotification('Task updated successfully!');
+            closeModal('editTaskModal');
+            location.reload();
+        } catch (error) {
+            showNotification('Error updating task', 'error');
+        }
+    });
     
     // Toggle task completion
     async function toggleTask(taskId) {
         try {
-            const result = await apiCall(`/api/tasks/${taskId}/toggle`, {
+            await apiCall(`/api/tasks/${taskId}/toggle`, {
                 method: 'POST'
             });
             
@@ -302,25 +438,86 @@
             }
         }
     }
+ 
+     function toggleTasks(projectId) {
+         const taskList = document.getElementById(`project-tasks-${projectId}`);
+         const projectCard = document.getElementById(`project-card-${projectId}`);
+         if (taskList.style.display === 'none') {
+             taskList.style.display = 'block';
+             projectCard.classList.add('expanded');
+         } else {
+             taskList.style.display = 'none';
+             projectCard.classList.remove('expanded');
+         }
+     }
+ 
+     function createColorPicker(containerId, inputId, initialColor) {
+         const colors = [
+             '#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#1abc9c',
+            '#3498db', '#9b59b6', '#34495e', '#7f8c8d', '#c0392b'
+        ];
+        const container = document.getElementById(containerId);
+        const input = document.getElementById(inputId);
+        container.innerHTML = '';
+        let selected = false;
+
+        colors.forEach(color => {
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch';
+            swatch.style.backgroundColor = color;
+            swatch.dataset.color = color;
+            
+            if (color === initialColor) {
+                swatch.classList.add('selected');
+                selected = true;
+            }
+
+            swatch.addEventListener('click', () => {
+                let currentSelection = container.querySelector('.selected');
+                if(currentSelection) {
+                    currentSelection.classList.remove('selected');
+                }
+                swatch.classList.add('selected');
+                input.value = swatch.dataset.color;
+            });
+            container.appendChild(swatch);
+        });
+
+        if (!selected && colors.length > 0) {
+            const firstSwatch = container.children[0];
+            firstSwatch.classList.add('selected');
+            input.value = firstSwatch.dataset.color;
+        } else {
+            input.value = initialColor;
+        }
+    }
+
+    // Open edit project modal
+    function openEditProjectModal(button) {
+        const project = JSON.parse(button.dataset.project);
+        document.getElementById('editProjectId').value = project.id;
+        document.getElementById('editProjectName').value = project.name;
+        document.getElementById('editProjectDescription').value = project.description;
+        createColorPicker('editProjectColorPicker', 'editProjectColor', project.color);
+        openModal('editProjectModal');
+    }
+
+    // Open edit task modal
+    function openEditTaskModal(button) {
+        const task = JSON.parse(button.dataset.task);
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('editTaskTitle').value = task.title;
+        document.getElementById('editTaskDescription').value = task.description;
+        document.getElementById('editTaskProject').value = task.project_id;
+        document.getElementById('editTaskStartDate').value = task.start_date ? task.start_date.split('T')[0] : '';
+        document.getElementById('editTaskDueDate').value = task.due_date ? task.due_date.split('T')[0] : '';
+        document.getElementById('editTaskPriority').value = task.priority;
+        openModal('editTaskModal');
+    }
     
     // Set today's date as default for start date
     document.getElementById('taskStartDate').value = new Date().toISOString().split('T')[0];
 
-    // Set dynamic colors for project cards and task items
-    document.querySelectorAll('.project-card').forEach(card => {
-        const color = card.getAttribute('data-project-color');
-        card.style.borderColor = color;
-        card.style.backgroundColor = `${color}10`;
-    });
-
-    document.querySelectorAll('.task-item').forEach(item => {
-        const color = item.getAttribute('data-task-color');
-        item.style.borderLeftColor = color;
-    });
-
-    document.querySelectorAll('.project-name').forEach(name => {
-        const color = name.closest('.project-card').getAttribute('data-project-color');
-        name.style.color = color;
-    });
+    createColorPicker('projectColorPicker', 'projectColor', '#3498db');
 </script>
 {% endblock %}
