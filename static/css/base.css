@@ -57,6 +57,11 @@ body {
     color: white;
 }
 
+.btn-view {
+    background: #9b59b6;
+    color: white;
+}
+
 .btn-sm {
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
@@ -170,12 +175,36 @@ body {
 
 .task-item-content {
     display: flex;
+    flex-direction: column;
+}
+
+.task-item h4 {
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+    padding-right: 8rem;
+    word-break: break-word;
+}
+
+.task-item-content {
+    display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    flex-direction: column;
 }
 
 .task-completed {
     opacity: 0.7;
+}
+.task-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.8rem;
+}
+
+.task-meta span[class^="priority-"] {
+    width: 65px;
+    flex-shrink: 0;
 }
 
 /* Modal styles */
@@ -213,6 +242,9 @@ body {
     gap: 0.5rem;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
 }
 
 .project-card:hover .project-actions,
@@ -283,4 +315,8 @@ body {
 
 .nav-links a:hover {
     color: #3498db;
+}
+
+.task-due-date {
+    white-space: nowrap;
 }

@@ -62,9 +62,9 @@
                         <div style="flex: 1;">
                             <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                             <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
-                            <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.8rem;">
+                            <div class="task-meta">
                                 <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
-                                <span style="color: #e74c3c;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }}</span>
+                                <span class="task-due-date" style="color: #e74c3c;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }} - {% set delta = date.today() - task.due_date %}{% if delta.days == 1 %}Yesterday{% else %}{{ delta.days }} days ago{% endif %}, {{ task.due_date.strftime('%A') }}</span>
                             </div>
                         </div>
                         <div class="task-actions">
@@ -101,9 +101,9 @@
                         <div style="flex: 1;">
                             <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                             <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
-                            <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.8rem;">
+                            <div class="task-meta">
                                 <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
-                                <span style="color: #3498db;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }}</span>
+                                <span class="task-due-date" style="color: #3498db;"><i class="fas fa-calendar"></i> {{ task.due_date.strftime('%m/%d') }} - {% set delta = task.due_date - date.today() %}{% if delta.days == 0 %}Today{% elif delta.days == 1 %}Tomorrow{% else %}in {{ delta.days }} days{% endif %}, {{ task.due_date.strftime('%A') }}</span>
                             </div>
                         </div>
                         <div class="task-actions">
@@ -140,7 +140,7 @@
                         <div style="flex: 1;">
                             <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                             <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ task.project.name }}</p>
-                            <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.8rem;">
+                            <div class="task-meta">
                                 <span class="priority-{{ task.priority }}">{{ task.priority.upper() }}</span>
                                 <span style="color: #2ecc71;"><i class="fas fa-check"></i> Completed</span>
                             </div>
@@ -509,14 +509,11 @@
         document.getElementById('editTaskTitle').value = task.title;
         document.getElementById('editTaskDescription').value = task.description;
         document.getElementById('editTaskProject').value = task.project_id;
-        document.getElementById('editTaskStartDate').value = task.start_date ? task.start_date.split('T')[0] : '';
-        document.getElementById('editTaskDueDate').value = task.due_date ? task.due_date.split('T')[0] : '';
+        document.getElementById('editTaskStartDate').value = task.start_date;
+        document.getElementById('editTaskDueDate').value = task.due_date;
         document.getElementById('editTaskPriority').value = task.priority;
         openModal('editTaskModal');
     }
-    
-    // Set today's date as default for start date
-    document.getElementById('taskStartDate').value = new Date().toISOString().split('T')[0];
 
     createColorPicker('projectColorPicker', 'projectColor', '#3498db');
 </script>
