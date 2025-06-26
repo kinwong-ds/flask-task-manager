@@ -241,7 +241,6 @@ function renderGanttRow(task, dateRange, timeUnits) {
                                 width: ${Math.max(2, widthPercent)}%;
                                 background-color: ${task.project.color};"
                          title="${task.title} (${formatDate(taskStart, 'M/d')} - ${formatDate(taskEnd, 'M/d')})">
-                        ${task.duration <= 7 ? '' : task.title.substring(0, 15) + (task.title.length > 15 ? '...' : '')}
                     </div>
                 </div>
             </div>

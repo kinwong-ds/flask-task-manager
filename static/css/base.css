@@ -343,6 +343,7 @@ body {
     overflow-x: auto;
     overflow-y: visible;
     min-height: 400px;
+    max-height: 600px;
     position: relative;
 }
 
@@ -382,6 +383,8 @@ body {
 
 .gantt-body {
     position: relative;
+    max-height: 500px;
+    overflow-y: auto;
 }
 
 .gantt-row {
@@ -414,6 +417,18 @@ body {
 .gantt-task-project {
     font-size: 0.8rem;
     color: #7f8c8d;
+}
+
+/* Task project name bubble styling */
+.task-project-name {
+    font-size: 0.8rem;
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    display: inline-block;
+    font-weight: 500;
+    color: #000 !important;
+    max-width: fit-content;
 }
 
 .gantt-timeline-container {

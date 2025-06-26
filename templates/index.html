@@ -67,7 +67,7 @@
                         <div class="task-title">
                             <div style="flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 0;">{{ task.project.name }}</p>
+                                    <p class="task-project-name" style="background-color: {{ task.project.color }}40; color: {{ task.project.color }};">{{ task.project.name }}</p>
                                 </div>
                                 <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                                 <div class="task-meta">
@@ -113,7 +113,7 @@
                         <div class="task-title">
                             <div style="flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 0;">{{ task.project.name }}</p>
+                                    <p class="task-project-name" style="background-color: {{ task.project.color }}40; color: {{ task.project.color }};">{{ task.project.name }}</p>
                                 </div>
                                 <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                                 <div class="task-meta">
@@ -159,7 +159,7 @@
                         <div class="task-title">
                             <div style="flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                    <p style="color: #7f8c8d; font-size: 0.9rem; margin: 0;">{{ task.project.name }}</p>
+                                    <p class="task-project-name" style="background-color: {{ task.project.color }}40; color: {{ task.project.color }};">{{ task.project.name }}</p>
                                 </div>
                                 <h4 style="margin-bottom: 0.5rem; color: #2c3e50;">{{ task.title }}</h4>
                                 <div class="task-meta">
@@ -613,29 +613,5 @@
     document.addEventListener('DOMContentLoaded', () => {
         createColorPicker('projectColorPicker', 'projectColor', '#3498db');
     });
-</script>
-    function openEditProjectModal(button) {
-        const project = JSON.parse(button.dataset.project);
-        document.getElementById('editProjectId').value = project.id;
-        document.getElementById('editProjectName').value = project.name;
-        document.getElementById('editProjectDescription').value = project.description;
-        createColorPicker('editProjectColorPicker', 'editProjectColor', project.color);
-        openModal('editProjectModal');
-    }
-
-    // Open edit task modal
-    function openEditTaskModal(button) {
-        const task = JSON.parse(button.dataset.task);
-        document.getElementById('editTaskId').value = task.id;
-        document.getElementById('editTaskTitle').value = task.title;
-        document.getElementById('editTaskDescription').value = task.description;
-        document.getElementById('editTaskProject').value = task.project_id;
-        document.getElementById('editTaskStartDate').value = task.start_date;
-        document.getElementById('editTaskDueDate').value = task.due_date;
-        document.getElementById('editTaskPriority').value = task.priority;
-        openModal('editTaskModal');
-    }
-
-    createColorPicker('projectColorPicker', 'projectColor', '#3498db');
 </script>
 {% endblock %}
