@@ -85,11 +85,6 @@ def index():
                          completed_tasks=completed_tasks,
                          date=date)
 
-@app.route('/timeline')
-def timeline():
-    projects = Project.query.all()
-    tasks = Task.query.filter_by(completed=False).order_by(Task.start_date).all()
-    return render_template('timeline.html', projects=projects, tasks=tasks)
 
 @app.route('/api/projects', methods=['GET', 'POST'])
 def handle_projects():
