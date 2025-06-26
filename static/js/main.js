@@ -184,33 +184,112 @@ function renderGanttChart() {
     // Sort tasks by due date (earliest first)
     const sortedTasks = [...ganttData].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
     
-    // Calculate date range
-    const dateRange = calculateDateRange(sortedTasks);
-    const timeUnits = generateTimeUnits(dateRange.start, dateRange.end);
+    // Calculate visible date range (limited view)
+    const visibleDateRange = calculateDateRange(sortedTasks);
+    const visibleTimeUnits = generateTimeUnits(visibleDateRange.start, visibleDateRange.end);
     
-    // Generate HTML
+    // Calculate full date range for scrolling
+    const fullDateRange = calculateFullDateRange(sortedTasks);
+    const fullTimeUnits = generateTimeUnits(fullDateRange.start, fullDateRange.end);
+    
+    // Calculate the width needed for the full timeline
+    const timelineWidth = Math.max(800, fullTimeUnits.length * 100); // Minimum 800px, or 100px per time unit
+    
+    // Generate HTML with scrollable timeline
     container.innerHTML = `
         <div class="gantt-header">
             <div class="gantt-task-column">Tasks</div>
-            <div class="gantt-timeline">
-                ${timeUnits.map(unit => `
-                    <div class="gantt-time-unit">${unit.label}</div>
-                `).join('')}
+            <div class="gantt-timeline-wrapper">
+                <div class="gantt-timeline" style="width: ${timelineWidth}px;">
+                    ${fullTimeUnits.map(unit => `
+                        <div class="gantt-time-unit" style="width: ${timelineWidth / fullTimeUnits.length}px;">${unit.label}</div>
+                    `).join('')}
+                </div>
             </div>
         </div>
         <div class="gantt-body">
-            ${sortedTasks.map(task => renderGanttRow(task, dateRange, timeUnits)).join('')}
-            <div class="gantt-grid-lines">
-                ${timeUnits.map((unit, index) => `
+            <div class="gantt-rows-container">
+                ${sortedTasks.map(task => renderGanttRow(task, fullDateRange, fullTimeUnits, timelineWidth)).join('')}
+            </div>
+            <div class="gantt-grid-lines" style="width: ${timelineWidth}px;">
+                ${fullTimeUnits.map((unit, index) => `
                     <div class="gantt-grid-line ${isToday(unit.date) ? 'gantt-today-line' : ''}"
-                         style="left: ${(index + 1) * (100 / timeUnits.length)}%"></div>
+                         style="left: ${(index * timelineWidth / fullTimeUnits.length) + (timelineWidth / fullTimeUnits.length)}px"></div>
                 `).join('')}
             </div>
         </div>
     `;
+    
+    // Scroll to show the current visible range
+    scrollToVisibleRange(visibleDateRange, fullDateRange, timelineWidth);
+}
+
+function scrollToVisibleRange(visibleRange, fullRange, timelineWidth) {
+    const container = document.getElementById('ganttContainer');
+    const totalDuration = fullRange.end - fullRange.start;
+    const visibleStartOffset = visibleRange.start - fullRange.start;
+    const scrollPosition = (visibleStartOffset / totalDuration) * timelineWidth;
+    
+    // Scroll to show the current time period
+    setTimeout(() => {
+        container.scrollLeft = Math.max(0, scrollPosition - 100); // Small offset for better visibility
+        
+        // Synchronize header and body scrolling
+        synchronizeScrolling();
+    }, 100);
+}
+
+function synchronizeScrolling() {
+    const container = document.getElementById('ganttContainer');
+    const timelineWrapper = container.querySelector('.gantt-timeline-wrapper');
+    const ganttBody = container.querySelector('.gantt-body');
+    
+    if (!timelineWrapper || !ganttBody) return;
+    
+    // Sync body scroll to header scroll
+    ganttBody.addEventListener('scroll', function() {
+        if (timelineWrapper.scrollLeft !== this.scrollLeft) {
+            timelineWrapper.scrollLeft = this.scrollLeft;
+        }
+    });
+    
+    // Sync header scroll to body scroll
+    timelineWrapper.addEventListener('scroll', function() {
+        if (ganttBody.scrollLeft !== this.scrollLeft) {
+            ganttBody.scrollLeft = this.scrollLeft;
+        }
+    });
 }
 
 function calculateDateRange(tasks) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    
+    let start, end;
+    
+    if (ganttView === 'weekly') {
+        // Weekly view: Show this week and next week (2 weeks total)
+        const startOfWeek = new Date(today);
+        const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        startOfWeek.setDate(today.getDate() - dayOfWeek); // Go to start of this week (Sunday)
+        
+        start = new Date(startOfWeek);
+        end = new Date(startOfWeek);
+        end.setDate(end.getDate() + 13); // 2 weeks (14 days - 1)
+    } else {
+        // Monthly view: Start from "today - 1 week" and show 4 weeks
+        start = new Date(today);
+        start.setDate(today.getDate() - 7); // Today - 1 week
+        
+        end = new Date(start);
+        end.setDate(end.getDate() + 27); // 4 weeks (28 days - 1)
+    }
+    
+    return { start, end };
+}
+
+function calculateFullDateRange(tasks) {
+    // Calculate the full range of all tasks for scrolling purposes
     if (tasks.length === 0) return { start: new Date(), end: new Date() };
     
     const startDates = tasks.map(t => new Date(t.start_date));
@@ -221,10 +300,10 @@ function calculateDateRange(tasks) {
     
     // Add some padding
     const start = new Date(minStart);
-    start.setDate(start.getDate() - (ganttView === 'weekly' ? 7 : 30));
+    start.setDate(start.getDate() - 7);
     
     const end = new Date(maxEnd);
-    end.setDate(end.getDate() + (ganttView === 'weekly' ? 7 : 30));
+    end.setDate(end.getDate() + 7);
     
     return { start, end };
 }
@@ -269,17 +348,17 @@ function generateTimeUnits(startDate, endDate) {
     return units;
 }
 
-function renderGanttRow(task, dateRange, timeUnits) {
+function renderGanttRow(task, dateRange, timeUnits, timelineWidth) {
     const taskStart = new Date(task.start_date);
     const taskEnd = new Date(task.due_date);
     
-    // Calculate position and width
+    // Calculate position and width in pixels
     const totalDuration = dateRange.end - dateRange.start;
     const taskStartOffset = taskStart - dateRange.start;
     const taskDuration = taskEnd - taskStart;
     
-    const leftPercent = (taskStartOffset / totalDuration) * 100;
-    const widthPercent = (taskDuration / totalDuration) * 100;
+    const leftPixels = (taskStartOffset / totalDuration) * timelineWidth;
+    const widthPixels = Math.max(20, (taskDuration / totalDuration) * timelineWidth); // Minimum 20px width
     
     // Create task data object for the modal
     const taskData = {
@@ -301,11 +380,11 @@ function renderGanttRow(task, dateRange, timeUnits) {
                     ${task.project.name}
                 </div>
             </div>
-            <div class="gantt-timeline-container">
+            <div class="gantt-timeline-container" style="width: ${timelineWidth}px;">
                 <div class="gantt-bar-container">
                     <div class="gantt-bar ${task.completed ? 'completed' : ''}"
-                         style="left: ${Math.max(0, leftPercent)}%;
-                                width: ${Math.max(2, widthPercent)}%;
+                         style="left: ${Math.max(0, leftPixels)}px;
+                                width: ${widthPixels}px;
                                 background-color: ${task.project.color};
                                 cursor: pointer;"
                          title="${task.title} (${formatDate(taskStart, 'M/d')} - ${formatDate(taskEnd, 'M/d')})"
