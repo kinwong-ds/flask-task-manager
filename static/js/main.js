@@ -82,9 +82,64 @@ function openViewTaskModal(button) {
     openModal('viewTaskModal');
 }
 
+function openViewTaskModalFromGantt(element) {
+    const task = JSON.parse(element.dataset.task);
+    const content = document.getElementById('viewTaskContent');
+    
+    // Format the due date nicely
+    let dueDateText = 'Not set';
+    if (task.due_date) {
+        const dueDate = new Date(task.due_date);
+        dueDateText = dueDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+    
+    // Format the start date nicely
+    let startDateText = 'Not set';
+    if (task.start_date) {
+        const startDate = new Date(task.start_date);
+        startDateText = startDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+    
+    content.innerHTML = `
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: #2c3e50; margin-bottom: 0.5rem;">${task.title}</h3>
+            <p style="margin: 0;"><strong>Project:</strong> ${task.project ? task.project.name : 'No project'}</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <p style="margin: 0.5rem 0;"><strong>Priority:</strong> <span class="priority-${task.priority}">${task.priority.toUpperCase()}</span></p>
+                <p style="margin: 0.5rem 0;"><strong>Status:</strong> ${task.completed ? 'Completed' : 'Active'}</p>
+            </div>
+            <div>
+                <p style="margin: 0.5rem 0;"><strong>Start Date:</strong> ${startDateText}</p>
+                <p style="margin: 0.5rem 0;"><strong>Due Date:</strong> ${dueDateText}</p>
+            </div>
+        </div>
+        
+        <div>
+            <p style="margin-bottom: 0.5rem;"><strong>Description:</strong></p>
+            <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 4px; border-left: 3px solid ${task.project ? task.project.color : '#3498db'};">
+                ${task.description || 'No description provided.'}
+            </div>
+        </div>
+    `;
+    openModal('viewTaskModal');
+}
+
 // Gantt Chart functionality
 let ganttData = [];
-let ganttView = 'weekly'; // 'weekly' or 'monthly'
+let ganttView = 'weekly'; // 'weekly', 'monthly', or 'twoweek'
 
 // Initialize Gantt chart on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -226,6 +281,18 @@ function renderGanttRow(task, dateRange, timeUnits) {
     const leftPercent = (taskStartOffset / totalDuration) * 100;
     const widthPercent = (taskDuration / totalDuration) * 100;
     
+    // Create task data object for the modal
+    const taskData = {
+        id: task.id,
+        title: task.title,
+        description: task.description || '',
+        start_date: task.start_date,
+        due_date: task.due_date,
+        completed: task.completed,
+        priority: task.priority,
+        project: task.project
+    };
+    
     return `
         <div class="gantt-row">
             <div class="gantt-task-info">
@@ -239,8 +306,11 @@ function renderGanttRow(task, dateRange, timeUnits) {
                     <div class="gantt-bar ${task.completed ? 'completed' : ''}"
                          style="left: ${Math.max(0, leftPercent)}%;
                                 width: ${Math.max(2, widthPercent)}%;
-                                background-color: ${task.project.color};"
-                         title="${task.title} (${formatDate(taskStart, 'M/d')} - ${formatDate(taskEnd, 'M/d')})">
+                                background-color: ${task.project.color};
+                                cursor: pointer;"
+                         title="${task.title} (${formatDate(taskStart, 'M/d')} - ${formatDate(taskEnd, 'M/d')})"
+                         data-task='${JSON.stringify(taskData)}'
+                         onclick="openViewTaskModalFromGantt(this)">
                     </div>
                 </div>
             </div>

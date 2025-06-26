@@ -196,6 +196,7 @@ def gantt_data():
         gantt_tasks.append({
             'id': task.id,
             'title': task.title,
+            'description': task.description,
             'start_date': task.start_date.isoformat(),
             'due_date': task.due_date.isoformat(),
             'duration': duration,
