@@ -1,3 +1,13 @@
+// How many time-units should be visible without scrolling?
+const VISIBLE_UNITS = {
+    weekly : 2,  // show 2 weeks
+    monthly: 2   // show 2 months
+};
+
+// returns the pixel width for ONE time-unit so that only `visibleUnits` fit the view
+function calcUnitWidth(containerWidth, visibleUnits) {
+    return containerWidth / visibleUnits;
+}
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.project-card').forEach(card => {
         const color = card.dataset.color;
@@ -192,8 +202,15 @@ function renderGanttChart() {
     const fullDateRange = calculateFullDateRange(sortedTasks);
     const fullTimeUnits = generateTimeUnits(fullDateRange.start, fullDateRange.end);
     
-    // Calculate the width needed for the full timeline
-    const timelineWidth = Math.max(800, fullTimeUnits.length * 100); // Minimum 800px, or 100px per time unit
+    // ----- NEW: work out the “viewport” width so only N units are visible -----
+    const TASK_COL_WIDTH = 200;                                     // matches CSS
+    const containerWidth  = container.clientWidth - TASK_COL_WIDTH; // space left for timeline
+    const unitWidth       = calcUnitWidth(
+            containerWidth,
+            VISIBLE_UNITS[ganttView]        // 2 weeks or 2 months
+    );
+    const timelineWidth   = fullTimeUnits.length * unitWidth;
+    // -------------------------------------------------------------------------
     
     // Generate HTML with scrollable timeline
     container.innerHTML = `
@@ -202,7 +219,7 @@ function renderGanttChart() {
             <div class="gantt-timeline-wrapper">
                 <div class="gantt-timeline" style="width: ${timelineWidth}px;">
                     ${fullTimeUnits.map(unit => `
-                        <div class="gantt-time-unit" style="width: ${timelineWidth / fullTimeUnits.length}px;">${unit.label}</div>
+                        <div class="gantt-time-unit" style="width: ${unitWidth}px;">${unit.label}</div>
                     `).join('')}
                 </div>
             </div>
@@ -214,7 +231,7 @@ function renderGanttChart() {
             <div class="gantt-grid-lines" style="width: ${timelineWidth}px;">
                 ${fullTimeUnits.map((unit, index) => `
                     <div class="gantt-grid-line ${isToday(unit.date) ? 'gantt-today-line' : ''}"
-                         style="left: ${(index * timelineWidth / fullTimeUnits.length) + (timelineWidth / fullTimeUnits.length)}px"></div>
+                         style="left: ${ (index + 1) * unitWidth }px"></div>
                 `).join('')}
             </div>
         </div>
@@ -223,6 +240,16 @@ function renderGanttChart() {
     // Scroll to show the current visible range
     scrollToVisibleRange(visibleDateRange, fullDateRange, timelineWidth);
 }
+// --- keep first column fixed on horizontal scroll ---
+    (function lockFirstColumn() {
+        const firstColsSelector = '.gantt-task-column, .gantt-task-info';
+        container.addEventListener('scroll', function () {
+            const x = this.scrollLeft + 'px';
+            this.querySelectorAll(firstColsSelector).forEach(el => {
+                el.style.transform = `translateX(${x})`;
+            });
+        });
+    })();
 
 function scrollToVisibleRange(visibleRange, fullRange, timelineWidth) {
     const container = document.getElementById('ganttContainer');
@@ -268,14 +295,18 @@ function calculateDateRange(tasks) {
     let start, end;
     
     if (ganttView === 'weekly') {
-        // Weekly view: Show this week and next week (2 weeks total)
+        // Weekly view: start 3 days earlier, then show 2 full weeks (14 days total)
+        const HALF_WEEK_OFFSET = 3;                // 3 days  ≈ ½ week
+
         const startOfWeek = new Date(today);
-        const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        startOfWeek.setDate(today.getDate() - dayOfWeek); // Go to start of this week (Sunday)
-        
+        const dayOfWeek   = today.getDay();        // 0 = Sun, 1 = Mon, …
+        startOfWeek.setDate(today.getDate() - dayOfWeek);
+
         start = new Date(startOfWeek);
-        end = new Date(startOfWeek);
-        end.setDate(end.getDate() + 13); // 2 weeks (14 days - 1)
+        start.setDate(start.getDate() - HALF_WEEK_OFFSET); // <-- shift left
+
+        end   = new Date(start);
+        end.setDate(end.getDate() + 13);           // two weeks span
     } else {
         // Monthly view: Start from "today - 1 week" and show 4 weeks
         start = new Date(today);
@@ -376,7 +407,9 @@ function renderGanttRow(task, dateRange, timeUnits, timelineWidth) {
         <div class="gantt-row">
             <div class="gantt-task-info">
                 <div class="gantt-task-title">${task.title}</div>
-                <div class="gantt-task-project" style="color: ${task.project.color}">
+                <div
+                  class="task-project-name"
+                  style="background-color: ${task.project.color}33;">
                     ${task.project.name}
                 </div>
             </div>
