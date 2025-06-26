@@ -179,6 +179,37 @@ def toggle_task(task_id):
     db.session.commit()
     return jsonify({'completed': task.completed})
 
+@app.route('/api/gantt-data')
+def gantt_data():
+    """Get tasks data formatted for Gantt chart"""
+    # Get all tasks with start and due dates, ordered by due date
+    tasks = Task.query.filter(
+        Task.start_date.isnot(None),
+        Task.due_date.isnot(None)
+    ).order_by(Task.due_date).all()
+    
+    gantt_tasks = []
+    for task in tasks:
+        # Calculate duration in days
+        duration = (task.due_date - task.start_date).days + 1
+        
+        gantt_tasks.append({
+            'id': task.id,
+            'title': task.title,
+            'start_date': task.start_date.isoformat(),
+            'due_date': task.due_date.isoformat(),
+            'duration': duration,
+            'completed': task.completed,
+            'priority': task.priority,
+            'project': {
+                'id': task.project.id,
+                'name': task.project.name,
+                'color': task.project.color
+            }
+        })
+    
+    return jsonify(gantt_tasks)
+
 
 # Initialize database function
 def init_db():

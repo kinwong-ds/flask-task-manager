@@ -48,6 +48,11 @@
 </div>
 
 <!-- Tasks Sections -->
+<div class="page-header" style="margin-bottom: 1rem;">
+    <h1 style="margin: 0; font-size: 1.8rem;">
+        <i class="fas fa-tasks"></i> Tasks
+    </h1>
+</div>
 <div class="grid grid-3">
     <!-- Overdue Tasks -->
     <div class="card">
@@ -183,6 +188,31 @@
                 {% if not completed_tasks %}
                 <p style="text-align: center; color: #95a5a6; padding: 2rem;">No completed tasks</p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gantt Chart Section -->
+<div class="page-header" style="margin-top: 2rem; margin-bottom: 1rem;">
+    <h1 style="margin: 0; font-size: 1.8rem;">
+        <i class="fas fa-chart-gantt"></i> Gantt Chart
+    </h1>
+    <div class="gantt-controls" style="margin-top: 1rem;">
+        <button class="btn btn-primary" id="weeklyViewBtn" onclick="setGanttView('weekly')">
+            <i class="fas fa-calendar-week"></i> Weekly View
+        </button>
+        <button class="btn" id="monthlyViewBtn" onclick="setGanttView('monthly')">
+            <i class="fas fa-calendar-alt"></i> Monthly View
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div id="ganttChart">
+            <div id="ganttContainer">
+                <!-- Gantt chart will be rendered here -->
             </div>
         </div>
     </div>
@@ -557,6 +587,33 @@
     }
 
     // Open edit project modal
+    function openEditProjectModal(button) {
+        const project = JSON.parse(button.dataset.project);
+        document.getElementById('editProjectId').value = project.id;
+        document.getElementById('editProjectName').value = project.name;
+        document.getElementById('editProjectDescription').value = project.description || '';
+        createColorPicker('editProjectColorPicker', 'editProjectColor', project.color);
+        openModal('editProjectModal');
+    }
+
+    // Open edit task modal
+    function openEditTaskModal(button) {
+        const task = JSON.parse(button.dataset.task);
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('editTaskTitle').value = task.title;
+        document.getElementById('editTaskDescription').value = task.description || '';
+        document.getElementById('editTaskProject').value = task.project_id;
+        document.getElementById('editTaskStartDate').value = task.start_date || '';
+        document.getElementById('editTaskDueDate').value = task.due_date || '';
+        document.getElementById('editTaskPriority').value = task.priority;
+        openModal('editTaskModal');
+    }
+
+    // Initialize color pickers when modals open
+    document.addEventListener('DOMContentLoaded', () => {
+        createColorPicker('projectColorPicker', 'projectColor', '#3498db');
+    });
+</script>
     function openEditProjectModal(button) {
         const project = JSON.parse(button.dataset.project);
         document.getElementById('editProjectId').value = project.id;
