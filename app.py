@@ -243,8 +243,12 @@ def init_db():
         
         db.session.commit()
 
-if __name__ == '__main__':
+@app.cli.command('init-db')
+def init_db_command():
+    """Clear existing data and create new tables."""
     with app.app_context():
         init_db()
-    
+    print('Initialized the database.')
+
+if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
