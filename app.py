@@ -33,7 +33,7 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    due_date = db.Column(db.Date)
+    due_date = db.Column(db.Date, nullable=False)
     start_date = db.Column(db.Date, default=date.today)
     completed = db.Column(db.Boolean, default=False)
     priority = db.Column(db.String(10), default='medium')
@@ -130,7 +130,7 @@ def handle_tasks():
         task = Task(
             title=data['title'],
             description=data.get('description', ''),
-            due_date=datetime.strptime(data['due_date'], '%Y-%m-%d').date() if data.get('due_date') else None,
+            due_date=datetime.strptime(data['due_date'], '%Y-%m-%d').date(),
             start_date=datetime.strptime(data['start_date'], '%Y-%m-%d').date() if data.get('start_date') else date.today(),
             priority=data.get('priority', 'medium'),
             project_id=data['project_id']
